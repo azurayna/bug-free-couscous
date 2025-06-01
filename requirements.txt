@@ -2,4 +2,6 @@ streamlit
 numpy
 plotly
 sympy 
-re
+black
+pylint
+watchdog
