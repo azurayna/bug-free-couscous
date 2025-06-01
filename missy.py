@@ -6,10 +6,10 @@ import plotly.graph_objs as go
 import re
 
 # === SETUP ===
-st.set_page_config(page_title="Dimensional Speculation Visualizer", layout="wide")
+st.set_page_config(page_title="Equation Visualizer", layout="wide")
 
-st.title("🔭 Dimensional Speculation: 2D to 3D Extensions")
-st.markdown("Explore how a 2D equation might embed into 3D space.")
+st.title(":, Equation Parametrizer + Visualizer!")
+st.markdown("Explore how a 2D equation might embed into the z axis. Customize, add restrictions, and visualize it in the 3D space.")
 
 # === SYMBOLS ===
 x, y, z, t = sp.symbols('x y z t')
@@ -18,7 +18,7 @@ i = sp.I
 
 # === USER INPUT ===
 with st.sidebar:
-    st.header("🧮 Equation & Restrictions")
+    st.header(" Equation & Restrictions")
     equation_input = st.text_input("2D Equation (e.g., y = x^2 + sqrt(x))", value="y = x^2")
     restriction_input = st.text_area("Optional Restriction (e.g., z < x + y)", value="", height=100)
 
