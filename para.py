@@ -1,106 +1,85 @@
-
 import streamlit as st
-import sympy as sp
 import numpy as np
-import plotly.graph_objs as go
-import re
+import sympy as sp
+import plotly.graph_objects as go
 
-# === SETUP ===
-st.set_page_config(page_title="Equation Visualizer", layout="wide")
+st.set_page_config(page_title="Parametrized Math Explorer", layout="centered")
+st.title(":,Parametrization Explorer!")
 
-st.title(":, Equation Parametrizer + Visualizer!")
-st.markdown("Explore how a 2D equation might embed into the z axis. Customize, add restrictions, and visualize it in the 3D space.")
+mode = st.radio("Choose mode:", ["Curve (y = f(x))", "Surface (z = f(x, y))"])
 
-# === SYMBOLS ===
-x, y, z, t = sp.symbols('x y z t')
-e = sp.E
-i = sp.I
+# Define symbols
+x, y, z = sp.symbols("x y z")
 
-# === USER INPUT ===
-with st.sidebar:
-    st.header(" Equation & Restrictions")
-    equation_input = st.text_input("2D Equation (e.g., y = x^2 + sqrt(x))", value="y = x^2")
-    restriction_input = st.text_area("Optional Restriction (e.g., z < x + y)", value="", height=100)
+# Common input range
+x_min = st.number_input("x min", value=-2.0)
+x_max = st.number_input("x max", value=2.0)
 
-# === PARSING ===
-def preprocess_input(expr):
-    expr = expr.replace('^', '**')
-    expr = re.sub(r'\be\*\*(\([^)]*\)|[a-zA-Z0-9_]+)', r'exp(\1)', expr)
-    return expr
+if x_min >= x_max:
+    st.error("x min must be less than x max.")
+    st.stop()
 
-def parse_equation(eq_str):
-    processed = preprocess_input(eq_str)
-    if "=" not in processed:
-        raise ValueError("Equation must contain '='")
-    lhs_str, rhs_str = processed.split("=")
-    lhs = sp.sympify(lhs_str.strip())
-    rhs = sp.sympify(rhs_str.strip())
-    return lhs - rhs
-
-# === PROCESSING ===
 try:
-    expr2d = parse_equation(equation_input)
-    sol = sp.solve(expr2d, y)
-    if not sol:
-        st.error("Could not solve for y in terms of x.")
-        st.stop()
-    y_expr = sol[0]
-    param_eqs = {
-        "z = 0": 0,
-        "z = t": t,
-        "z = y": y_expr.subs(x, t),
-        "z = sqrt(x^2 + y^2)": sp.sqrt(t**2 + y_expr.subs(x, t)**2),
-        "z = sin(t)": sp.sin(t),
-        "z = exp(t)": sp.exp(t)
-    }
+    if mode == "Curve (y = f(x))":
+        curve_input = st.text_input("y = f(x):", value="x^2")
+        z_input = st.text_input("Optional: z = f(x, y):", value="sin(x*y)")
 
-    # === PLOT SETUP ===
-    t_vals = np.linspace(-10, 10, 500)
-    fig = go.Figure()
-    visible_curves = []
-    latex_strings = []
+        curve_input = curve_input.replace("^", "**")
+        z_input = z_input.replace("^", "**")
 
-    for label, z_expr in param_eqs.items():
-        x_vals = t_vals
-        y_vals = sp.lambdify(t, y_expr.subs(x, t), 'numpy')(t_vals)
-        z_vals = sp.lambdify(t, z_expr, 'numpy')(t_vals)
+        y_expr = sp.sympify(curve_input)
+        y_func = sp.lambdify(x, y_expr, modules="numpy")
 
-        # Apply restriction if given
-        keep = np.full_like(t_vals, True, dtype=bool)
-        if restriction_input.strip():
-            try:
-                r_expr = preprocess_input(restriction_input.strip())
-                r_sym = sp.sympify(r_expr)
-                r_func = sp.lambdify((x, y, z), r_sym, 'numpy')
-                keep = r_func(x_vals, y_vals, z_vals)
-            except:
-                st.warning(f"Could not apply restriction: `{restriction_input}`")
+        x_vals = np.linspace(x_min, x_max, 400)
+        y_vals = y_func(x_vals)
 
+        if z_input.strip() == "":
+            z_vals = np.zeros_like(x_vals)
+        else:
+            z_expr = sp.sympify(z_input)
+            z_func = sp.lambdify((x, y), z_expr, modules="numpy")
+            z_vals = z_func(x_vals, y_vals)
+
+        fig = go.Figure()
         fig.add_trace(go.Scatter3d(
-            x=x_vals[keep], y=y_vals[keep], z=z_vals[keep],
-            mode='lines',
-            name=label,
-            line=dict(width=3)
+            x=x_vals, y=y_vals, z=z_vals,
+            mode='lines', line=dict(width=4),
+            name="Curve"
         ))
-        latex_strings.append(f"x(t) = t, \\ y(t) = {sp.latex(y_expr.subs(x, t))}, \\ {label}")
+        fig.update_layout(
+            title="3D Parametrized Curve",
+            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
+            margin=dict(l=0, r=0, b=0, t=40)
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-    fig.update_layout(
-        title="Possible 3D Dimensionalizations",
-        scene=dict(
-            xaxis_title='x',
-            yaxis_title='y',
-            zaxis_title='z',
-        ),
-        width=1000, height=700,
-        margin=dict(l=0, r=0, t=40, b=0)
-    )
+    else:  # Surface mode
+        y_min = st.number_input("y min", value=-2.0)
+        y_max = st.number_input("y max", value=2.0)
 
-    st.plotly_chart(fig, use_container_width=True)
+        if y_min >= y_max:
+            st.error("y min must be less than y max.")
+            st.stop()
 
-    with st.sidebar:
-        st.header("📋 Parametrizations")
-        for tex in latex_strings:
-            st.latex(tex)
+        surface_input = st.text_input("z = f(x, y):", value="sin(x^2 + y^2)")
+        surface_input = surface_input.replace("^", "**")
+
+        z_expr = sp.sympify(surface_input)
+        z_func = sp.lambdify((x, y), z_expr, modules="numpy")
+
+        x_vals = np.linspace(x_min, x_max, 100)
+        y_vals = np.linspace(y_min, y_max, 100)
+        X, Y = np.meshgrid(x_vals, y_vals)
+        Z = z_func(X, Y)
+
+        fig = go.Figure(data=[go.Surface(x=X, y=Y, z=Z, colorscale='Viridis')])
+        fig.update_layout(
+            title="3D Surface",
+            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
+            margin=dict(l=0, r=0, b=0, t=40)
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Error: {e}")
+
