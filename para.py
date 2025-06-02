@@ -40,7 +40,68 @@ try:
             z_func = sp.lambdify((x, y), z_expr, modules="numpy")
             z_vals = z_func(x_vals, y_vals)
 
-        fig = go.Figure()
+        # Generate frames for the animated point
+frames = []
+for i in range(len(x_vals)):
+    frame = go.Frame(
+        data=[
+            go.Scatter3d(
+                x=x_vals[:i+1],
+                y=y_vals[:i+1],
+                z=z_vals[:i+1],
+                mode="lines",
+                line=dict(color="blue", width=4),
+                showlegend=False
+            ),
+            go.Scatter3d(
+                x=[x_vals[i]],
+                y=[y_vals[i]],
+                z=[z_vals[i]],
+                mode="markers",
+                marker=dict(size=6, color="red"),
+                name="Moving Point"
+            )
+        ],
+        name=str(i)
+    )
+    frames.append(frame)
+
+# Initial figure
+fig = go.Figure(
+    data=[
+        go.Scatter3d(
+            x=[x_vals[0]],
+            y=[y_vals[0]],
+            z=[z_vals[0]],
+            mode="lines",
+            line=dict(color="blue", width=4),
+            showlegend=False
+        ),
+        go.Scatter3d(
+            x=[x_vals[0]],
+            y=[y_vals[0]],
+            z=[z_vals[0]],
+            mode="markers",
+            marker=dict(size=6, color="red"),
+            name="Moving Point"
+        )
+    ],
+    layout=go.Layout(
+        title="3D Parametrized Curve with Moving Particle",
+        scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
+        updatemenus=[dict(
+            type="buttons",
+            buttons=[dict(label="Play", method="animate", args=[None])],
+            showactive=False
+        )],
+        margin=dict(l=0, r=0, b=0, t=40),
+        scene_camera=dict(eye=dict(x=1.2, y=1.2, z=1.2))
+    ),
+    frames=frames
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
         fig.add_trace(go.Scatter3d(
             x=x_vals, y=y_vals, z=z_vals,
             mode='lines', line=dict(width=4),
