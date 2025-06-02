@@ -21,30 +21,15 @@ if x_min >= x_max:
 
 try:
     if mode == "Curve (y = f(x))":
-        curve_input = st.text_input("y = f(x):", value="x^2")
-        z_input = st.text_input("Optional: z = f(x, y):", value="sin(x*y)")
-
-        curve_input = curve_input.replace("^", "**")
-        z_input = z_input.replace("^", "**")
-
-        y_expr = sp.sympify(curve_input)
-        y_func = sp.lambdify(x, y_expr, modules="numpy")
-
-        x_vals = np.linspace(x_min, x_max, 400)
-        y_vals = y_func(x_vals)
-
-        if z_input.strip() == "":
-            z_vals = np.zeros_like(x_vals)
-
-                # Generate frames for the animated point
+       # Animation frames for moving point
 frames = []
 for i in range(len(x_vals)):
     frame = go.Frame(
         data=[
             go.Scatter3d(
-                x=x_vals[:i+1],
-                y=y_vals[:i+1],
-                z=z_vals[:i+1],
+                x=x_vals,
+                y=y_vals,
+                z=z_vals,
                 mode="lines",
                 line=dict(color="blue", width=4),
                 showlegend=False
@@ -62,16 +47,16 @@ for i in range(len(x_vals)):
     )
     frames.append(frame)
 
-# Initial figure
+# Main figure
 fig = go.Figure(
     data=[
         go.Scatter3d(
-            x=[x_vals[0]],
-            y=[y_vals[0]],
-            z=[z_vals[0]],
+            x=x_vals,
+            y=y_vals,
+            z=z_vals,
             mode="lines",
             line=dict(color="blue", width=4),
-            showlegend=False
+            name="Curve"
         ),
         go.Scatter3d(
             x=[x_vals[0]],
@@ -87,16 +72,30 @@ fig = go.Figure(
         scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
         updatemenus=[dict(
             type="buttons",
-            buttons=[dict(label="Play", method="animate", args=[None])],
+            buttons=[dict(label="▶️ Play", method="animate", args=[None])],
             showactive=False
         )],
         margin=dict(l=0, r=0, b=0, t=40),
-        scene_camera=dict(eye=dict(x=1.2, y=1.2, z=1.2))
+        scene_camera=dict(eye=dict(x=1.25, y=1.25, z=1.25))
     ),
     frames=frames
 )
 
 st.plotly_chart(fig, use_container_width=True)
+ curve_input = st.text_input("y = f(x):", value="x^2")
+        z_input = st.text_input("Optional: z = f(x, y):", value="sin(x*y)")
+
+        curve_input = curve_input.replace("^", "**")
+        z_input = z_input.replace("^", "**")
+
+        y_expr = sp.sympify(curve_input)
+        y_func = sp.lambdify(x, y_expr, modules="numpy")
+
+        x_vals = np.linspace(x_min, x_max, 400)
+        y_vals = y_func(x_vals)
+
+        if z_input.strip() == "":
+            z_vals = np.zeros_like(x_vals)
         else:
             z_expr = sp.sympify(z_input)
             z_func = sp.lambdify((x, y), z_expr, modules="numpy")
