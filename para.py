@@ -35,12 +35,8 @@ try:
 
         if z_input.strip() == "":
             z_vals = np.zeros_like(x_vals)
-        else:
-            z_expr = sp.sympify(z_input)
-            z_func = sp.lambdify((x, y), z_expr, modules="numpy")
-            z_vals = z_func(x_vals, y_vals)
 
-        # Generate frames for the animated point
+                # Generate frames for the animated point
 frames = []
 for i in range(len(x_vals)):
     frame = go.Frame(
@@ -101,6 +97,11 @@ fig = go.Figure(
 )
 
 st.plotly_chart(fig, use_container_width=True)
+        else:
+            z_expr = sp.sympify(z_input)
+            z_func = sp.lambdify((x, y), z_expr, modules="numpy")
+            z_vals = z_func(x_vals, y_vals)
+
 
         fig.add_trace(go.Scatter3d(
             x=x_vals, y=y_vals, z=z_vals,
