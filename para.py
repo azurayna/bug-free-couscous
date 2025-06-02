@@ -21,68 +21,7 @@ if x_min >= x_max:
 
 try:
     if mode == "Curve (y = f(x))":
-       # Animation frames for moving point
-frames = []
-for i in range(len(x_vals)):
-    frame = go.Frame(
-        data=[
-            go.Scatter3d(
-                x=x_vals,
-                y=y_vals,
-                z=z_vals,
-                mode="lines",
-                line=dict(color="blue", width=4),
-                showlegend=False
-            ),
-            go.Scatter3d(
-                x=[x_vals[i]],
-                y=[y_vals[i]],
-                z=[z_vals[i]],
-                mode="markers",
-                marker=dict(size=6, color="red"),
-                name="Moving Point"
-            )
-        ],
-        name=str(i)
-    )
-    frames.append(frame)
-
-# Main figure
-fig = go.Figure(
-    data=[
-        go.Scatter3d(
-            x=x_vals,
-            y=y_vals,
-            z=z_vals,
-            mode="lines",
-            line=dict(color="blue", width=4),
-            name="Curve"
-        ),
-        go.Scatter3d(
-            x=[x_vals[0]],
-            y=[y_vals[0]],
-            z=[z_vals[0]],
-            mode="markers",
-            marker=dict(size=6, color="red"),
-            name="Moving Point"
-        )
-    ],
-    layout=go.Layout(
-        title="3D Parametrized Curve with Moving Particle",
-        scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
-        updatemenus=[dict(
-            type="buttons",
-            buttons=[dict(label="▶️ Play", method="animate", args=[None])],
-            showactive=False
-        )],
-        margin=dict(l=0, r=0, b=0, t=40),
-        scene_camera=dict(eye=dict(x=1.25, y=1.25, z=1.25))
-    ),
-    frames=frames
-)
-
-st.plotly_chart(fig, use_container_width=True)
- curve_input = st.text_input("y = f(x):", value="x^2")
+        curve_input = st.text_input("y = f(x):", value="x^2")
         z_input = st.text_input("Optional: z = f(x, y):", value="sin(x*y)")
 
         curve_input = curve_input.replace("^", "**")
@@ -101,17 +40,65 @@ st.plotly_chart(fig, use_container_width=True)
             z_func = sp.lambdify((x, y), z_expr, modules="numpy")
             z_vals = z_func(x_vals, y_vals)
 
+        # Generate animation frames
+        frames = []
+        for i in range(len(x_vals)):
+            frame = go.Frame(
+                data=[
+                    go.Scatter3d(
+                        x=x_vals[:i+1],
+                        y=y_vals[:i+1],
+                        z=z_vals[:i+1],
+                        mode="lines",
+                        line=dict(color="blue", width=4),
+                        showlegend=False
+                    ),
+                    go.Scatter3d(
+                        x=[x_vals[i]],
+                        y=[y_vals[i]],
+                        z=[z_vals[i]],
+                        mode="markers",
+                        marker=dict(size=6, color="red"),
+                        name="Moving Point"
+                    )
+                ],
+                name=str(i)
+            )
+            frames.append(frame)
 
-        fig.add_trace(go.Scatter3d(
-            x=x_vals, y=y_vals, z=z_vals,
-            mode='lines', line=dict(width=4),
-            name="Curve"
-        ))
-        fig.update_layout(
-            title="3D Parametrized Curve",
-            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
-            margin=dict(l=0, r=0, b=0, t=40)
+        fig = go.Figure(
+            data=[
+                go.Scatter3d(
+                    x=x_vals,
+                    y=y_vals,
+                    z=z_vals,
+                    mode="lines",
+                    line=dict(color="blue", width=4),
+                    name="Curve"
+                ),
+                go.Scatter3d(
+                    x=[x_vals[0]],
+                    y=[y_vals[0]],
+                    z=[z_vals[0]],
+                    mode="markers",
+                    marker=dict(size=6, color="red"),
+                    name="Moving Point"
+                )
+            ],
+            layout=go.Layout(
+                title="3D Parametrized Curve with Moving Particle",
+                scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
+                updatemenus=[dict(
+                    type="buttons",
+                    buttons=[dict(label="▶️ Play", method="animate", args=[None])],
+                    showactive=False
+                )],
+                margin=dict(l=0, r=0, b=0, t=40),
+                scene_camera=dict(eye=dict(x=1.2, y=1.2, z=1.2))
+            ),
+            frames=frames
         )
+
         st.plotly_chart(fig, use_container_width=True)
 
     else:  # Surface mode
@@ -143,4 +130,3 @@ st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Error: {e}")
-
