@@ -104,103 +104,103 @@ try:
 
     elif mode == "Parametric Curve (x(t), y(t))":
         
-    st.markdown("Define x(t), y(t), and optionally z(t).")
+        st.markdown("Define x(t), y(t), and optionally z(t).")
 
-    t_min = st.number_input("t min", value=0.0)
-    t_max = st.number_input("t max", value=2 * np.pi)
+        t_min = st.number_input("t min", value=0.0)
+        t_max = st.number_input("t max", value=2 * np.pi)
 
-    x_input = st.text_input("x(t):", value="cos(t)")
-    y_input = st.text_input("y(t):", value="sin(t)")
-    z_input = st.text_input("z(t):", value="t/2")
+        x_input = st.text_input("x(t):", value="cos(t)")
+        y_input = st.text_input("y(t):", value="sin(t)")
+        z_input = st.text_input("z(t):", value="t/2")
 
-    x_input = x_input.replace("^", "**")
-    y_input = y_input.replace("^", "**")
-    z_input = z_input.replace("^", "**")
+        x_input = x_input.replace("^", "**")
+        y_input = y_input.replace("^", "**")
+        z_input = z_input.replace("^", "**")
 
-    x_expr = sp.sympify(x_input)
-    y_expr = sp.sympify(y_input)
-    z_expr = sp.sympify(z_input)
+        x_expr = sp.sympify(x_input)
+        y_expr = sp.sympify(y_input)
+        z_expr = sp.sympify(z_input)
 
-    # Velocity components
-    dx_dt = sp.diff(x_expr, t)
-    dy_dt = sp.diff(y_expr, t)
-    dz_dt = sp.diff(z_expr, t)
+        # Velocity components
+        dx_dt = sp.diff(x_expr, t)
+        dy_dt = sp.diff(y_expr, t)
+        dz_dt = sp.diff(z_expr, t)
 
-    x_func = sp.lambdify(t, x_expr, modules="numpy")
-    y_func = sp.lambdify(t, y_expr, modules="numpy")
-    z_func = sp.lambdify(t, z_expr, modules="numpy")
-    dx_func = sp.lambdify(t, dx_dt, modules="numpy")
-    dy_func = sp.lambdify(t, dy_dt, modules="numpy")
-    dz_func = sp.lambdify(t, dz_dt, modules="numpy")
+        x_func = sp.lambdify(t, x_expr, modules="numpy")
+        y_func = sp.lambdify(t, y_expr, modules="numpy")
+        z_func = sp.lambdify(t, z_expr, modules="numpy")
+        dx_func = sp.lambdify(t, dx_dt, modules="numpy")
+        dy_func = sp.lambdify(t, dy_dt, modules="numpy")
+        dz_func = sp.lambdify(t, dz_dt, modules="numpy")
 
-    t_vals = np.linspace(t_min, t_max, 400)
-    x_vals = x_func(t_vals)
-    y_vals = y_func(t_vals)
-    z_vals = z_func(t_vals)
+        t_vals = np.linspace(t_min, t_max, 400)
+        x_vals = x_func(t_vals)
+        y_vals = y_func(t_vals)
+        z_vals = z_func(t_vals)
 
-    # Sample fewer points for vectors
-    arrow_t = np.linspace(t_min, t_max, 20)
-    arrow_x = x_func(arrow_t)
-    arrow_y = y_func(arrow_t)
-    arrow_z = z_func(arrow_t)
-    arrow_u = dx_func(arrow_t)
-    arrow_v = dy_func(arrow_t)
-    arrow_w = dz_func(arrow_t)
+        # Sample fewer points for vectors
+        arrow_t = np.linspace(t_min, t_max, 20)
+        arrow_x = x_func(arrow_t)
+        arrow_y = y_func(arrow_t)
+        arrow_z = z_func(arrow_t)
+        arrow_u = dx_func(arrow_t)
+        arrow_v = dy_func(arrow_t)
+        arrow_w = dz_func(arrow_t)
 
-    # Plot cone velocity vectors
-    cones = go.Cone(
-        x=arrow_x,
-        y=arrow_y,
-        z=arrow_z,
-        u=arrow_u,
-        v=arrow_v,
-        w=arrow_w,
-        sizemode="scaled",
-        sizeref=0.5,
-        anchor="tail",
-        colorscale="Reds",
-        showscale=False,
-        name="Velocity Vectors"
-    )
+        # Plot cone velocity vectors
+        cones = go.Cone(
+            x=arrow_x,
+            y=arrow_y,
+            z=arrow_z,
+            u=arrow_u,
+            v=arrow_v,
+            w=arrow_w,
+            sizemode="scaled",
+            sizeref=0.5,
+            anchor="tail",
+            colorscale="Reds",
+            showscale=False,
+            name="Velocity Vectors"
+        )
 
-    # Animation frames for motion
-    frames = []
-    for i in range(len(t_vals)):
-        frame = go.Frame(
+        # Animation frames for motion
+        frames = []
+        for i in range(len(t_vals)):
+            frame = go.Frame(
+                data=[
+                    go.Scatter3d(x=x_vals[:i+1], y=y_vals[:i+1], z=z_vals[:i+1],
+                                 mode="lines", line=dict(color="blue", width=4), showlegend=False),
+                    go.Scatter3d(x=[x_vals[i]], y=[y_vals[i]], z=[z_vals[i]],
+                                 mode="markers", marker=dict(size=6, color="red"), name="Moving Point"),
+                    cones
+                ],
+                name=str(i)
+            )
+            frames.append(frame)
+
+        fig = go.Figure(
             data=[
-                go.Scatter3d(x=x_vals[:i+1], y=y_vals[:i+1], z=z_vals[:i+1],
-                             mode="lines", line=dict(color="blue", width=4), showlegend=False),
-                go.Scatter3d(x=[x_vals[i]], y=[y_vals[i]], z=[z_vals[i]],
+                go.Scatter3d(x=x_vals, y=y_vals, z=z_vals,
+                             mode="lines", line=dict(color="blue", width=4), name="Parametric Curve"),
+                go.Scatter3d(x=[x_vals[0]], y=[y_vals[0]], z=[z_vals[0]],
                              mode="markers", marker=dict(size=6, color="red"), name="Moving Point"),
                 cones
             ],
-            name=str(i)
+            layout=go.Layout(
+                title="3D Parametric Curve with Velocity Vectors",
+                scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
+                updatemenus=[dict(
+                    type="buttons",
+                    buttons=[dict(label="▶️ Play", method="animate", args=[None])],
+                    showactive=False
+                )],
+                margin=dict(l=0, r=0, b=0, t=40),
+            	    scene_camera=dict(eye=dict(x=1.2, y=1.2, z=1.2))
+            ),
+            frames=frames
         )
-        frames.append(frame)
 
-    fig = go.Figure(
-        data=[
-            go.Scatter3d(x=x_vals, y=y_vals, z=z_vals,
-                         mode="lines", line=dict(color="blue", width=4), name="Parametric Curve"),
-            go.Scatter3d(x=[x_vals[0]], y=[y_vals[0]], z=[z_vals[0]],
-                         mode="markers", marker=dict(size=6, color="red"), name="Moving Point"),
-            cones
-        ],
-        layout=go.Layout(
-            title="3D Parametric Curve with Velocity Vectors",
-            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='z'),
-            updatemenus=[dict(
-                type="buttons",
-                buttons=[dict(label="▶️ Play", method="animate", args=[None])],
-                showactive=False
-            )],
-            margin=dict(l=0, r=0, b=0, t=40),
-            scene_camera=dict(eye=dict(x=1.2, y=1.2, z=1.2))
-        ),
-        frames=frames
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 
 except Exception as e:
